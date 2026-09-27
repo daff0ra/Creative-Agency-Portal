@@ -21,10 +21,10 @@ export const loginUser = async (req,res) =>{
     try{
         const {email, password} = req.body;
 
-        const user = await User.findOne({email}).selected("+password");
+        const user = await User.findOne({email}).select("+password");
         if(!user) return res.status(401).json({message: "email atau password yang di isikan salah"});
 
-        const isMatch = await user.commparePassword(password);
+        const isMatch = await user.comparePassword(password);
         if (!isMatch) return res.status(401).json({message: "email atau password yang di isikan salah"});
 
         const accessToken = generateAccessToken(user);
