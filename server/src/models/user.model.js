@@ -33,10 +33,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // skip kalau password tidak berubah
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return; 
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 // Method ini nempel di setiap instance User (misal: user.comparePassword(...)).
