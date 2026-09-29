@@ -33,20 +33,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Gaya async — tanpa next
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next(); // skip kalau password tidak berubah
   this.password = await bcrypt.hash(this.password, 10);
-}
-);
+  next();
+});
 
-userSchema.methods.comparePassword = async function (plainPassword){
+// Method ini nempel di setiap instance User (misal: user.comparePassword(...)).
+// Dipakai saat login: bandingkan password yang diketik user dengan hash di DB.
+userSchema.methods.comparePassword = async function (plainPassword) {
   return bcrypt.compare(plainPassword, this.password);
-}
-
-userSchema.index(
-  { organization: 1 },
-  { unique: true, partialFilterExpression: { role: "CLIENT_OWNER" } }
-);
+};
 
 export default mongoose.model("User", userSchema);

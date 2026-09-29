@@ -1,5 +1,5 @@
-import OrganizationModel from "../models/Organization.model";
-import User from "../models/user.model";
+import Organization from "../models/Organization.model.js";
+import User from "../models/user.model.js";
 
 // export const createOrganization = async (req,res) => {
 //     try {
@@ -62,7 +62,7 @@ export const createOrganization = async (req, res) => {
       res.status(500).json({ message: "Terjadi kesalahan", error: err.message });
     }
   };
-  
+
 export const getOrganizations = async (req, res) => {
     // populate(field, "kolom yang diambil"): ganti ObjectId dengan data user, hanya name & email
     const organizations = await Organization.find()

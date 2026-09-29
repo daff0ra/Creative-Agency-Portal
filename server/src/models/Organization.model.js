@@ -36,7 +36,7 @@ const organizationSchema = new mongoose.Schema(
 
 );
 
-organizationSchema.virtuals("owner", {
+organizationSchema.virtual("owner", {
   ref: "User",
   localField: "_id",
   foreignField: "organization",
