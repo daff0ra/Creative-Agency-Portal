@@ -44,4 +44,9 @@ userSchema.methods.comparePassword = async function (plainPassword){
   return bcrypt.compare(plainPassword, this.password);
 }
 
+userSchema.index(
+  { organization: 1 },
+  { unique: true, partialFilterExpression: { role: "CLIENT_OWNER" } }
+);
+
 export default mongoose.model("User", userSchema);
