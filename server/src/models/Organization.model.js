@@ -3,22 +3,17 @@ import mongoose from "mongoose";
 
 const organizationSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
     industry: { type: String, trim: true },
     website: { type: String, trim: true },
     logo: { type: String, default: null },
 
-    // Relasi 1-ke-1 ke User (role: CLIENT_OWNER).
-    // `unique: true` memastikan satu User cuma bisa jadi owner
-    // dari SATU Organization — mencegah 1 owner dobel pegang 2 perusahaan.
-    // Karena field ini cuma menyimpan 1 ObjectId (bukan array),
-    // secara struktur data pun Organization otomatis cuma punya 1 owner.
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      unique: true,
-    },
+    // sudah dibuat dengan mengecek organisasi yang langsung masuk ke salah satu akun user
+    // owner: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User"
+    //   required: true,
+    //   unique: true,
+    // },
 
     // Status onboarding client — akan kita pakai nanti untuk
     // menentukan tampilan progress bar & task checklist di frontend
@@ -37,7 +32,15 @@ const organizationSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true} }
+
 );
 
+organizationSchema.virtual("owner", {
+  ref: "User",
+  localField: "_id",
+  foreignField: "organization",
+  justOne: true,
+  match: {role: "CLIENT_OWNER"}
+});
 export default mongoose.model("Organization", organizationSchema);
