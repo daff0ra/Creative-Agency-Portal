@@ -71,16 +71,16 @@ export const getOrganizations = async (req, res) => {
     res.json(organizations);
   };
   
-  export const getOrganizationById = async (req, res) => {
-    const organization = await Organization.findById(req.params.id).populate("owner", "name email");
-    if (!organization) return res.status(404).json({ message: "Organization tidak ditemukan" });
+export const getOrganizationById = async (req, res) => {
+  const organization = await Organization.findById(req.params.id).populate("owner", "name email");
+  if (!organization) return res.status(404).json({ message: "Organization tidak ditemukan" });
   
     // Staff agency boleh lihat semua; client hanya boleh lihat organization miliknya.
     // String() dipakai karena ObjectId dibandingkan sebagai objek, bukan nilai.
-    const isAgency = req.user.userType === "agency";
-    if (!isAgency && String(req.user.organization) !== String(organization._id)) {
-      return res.status(403).json({ message: "Akses ditolak" });
-    }
+  const isAgency = req.user.userType === "agency";
+  if (!isAgency && String(req.user.organization) !== String(organization._id)) {
+    return res.status(403).json({ message: "Akses ditolak" });
+  }
   
-    res.json(organization);
-  };
+  res.json(organization);
+};
