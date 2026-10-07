@@ -1,6 +1,5 @@
-// client/src/context/AuthContext.jsx
 import { createContext, useContext, useState, useCallback } from "react";
-import { api, setAccessToken as setApiToken } from "../api/axios.jsx";
+import { api, setAccessToken as setApiToken } from "../api/axios";
 
 const AuthContext = createContext(null);
 
