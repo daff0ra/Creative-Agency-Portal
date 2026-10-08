@@ -5,7 +5,7 @@ import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 
-const ROLES = ["SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER", "STAFF"];
+const ROLES = ["ADMIN", "ACCOUNT_MANAGER", "STAFF"];
 
 export const AddStaffPage = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "STAFF" });

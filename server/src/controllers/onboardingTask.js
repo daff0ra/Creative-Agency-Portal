@@ -41,9 +41,9 @@ export const completeTask = async (req,res) =>{
     task.completedAt = new Date();
     await task.save();
 
-    const remaining = await OnboardingTask.countDocuments({organization: task.organization, isCompleted : false});
-    if(remaining === 0){
-        await Organization.findByIdAndUpdate(task.organization, { onboardingStatus : "completed"});
-    }
+    const remaining = await OnboardingTask.countDocuments({ organization: task.organization, isCompleted: false });
+    await Organization.findByIdAndUpdate(task.organization, {
+    onboardingStatus: remaining === 0 ? "completed" : "in_progress",
+    });
     res.json(task);
 }

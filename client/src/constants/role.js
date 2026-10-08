@@ -1,0 +1,1 @@
+export const MANAGERS = ["SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER"];

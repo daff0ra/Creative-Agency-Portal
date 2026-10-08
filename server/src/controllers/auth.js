@@ -65,7 +65,9 @@ export const refreshAccessToken = async (req,res) =>{
     if(!user || user.refreshToken !== token){
         return res.status(401).json({message: "refresh token tidak valid"});
     }
-    res.json({ accessToken: generateAccessToken(user)})
+    res.json({ accessToken: generateAccessToken(user),
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, userType: user.userType }
+    });
 }
 
 export const logoutUser = async (req,res) =>{

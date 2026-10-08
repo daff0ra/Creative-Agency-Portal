@@ -8,6 +8,6 @@ const agencyStaff = authorize("SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER");
 
 router.post("/", authenticate, agencyStaff, createOrganization);
 router.get("/", authenticate, agencyStaff, getOrganizations);
-router.get("/", authenticate, getOrganizationById);
+router.get("/:id", authenticate, getOrganizationById);
 
 export default router;
