@@ -1,4 +1,3 @@
-// server/src/models/OnboardingTask.model.js
 import mongoose from "mongoose";
 
 const onboardingTaskSchema = new mongoose.Schema(

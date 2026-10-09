@@ -19,23 +19,52 @@ api.interceptors.request.use((config) =>{
 
 // nanti pikirin lagi klo sudah ada mekanisme pengganti refresh. 
 // yang auto tukern cookie sama auth login
-api.interceptors.response.use((res) => res, async (err) =>{
+ 
+// fix : rekursif request jika tidak terpenuhi, coba teliti lagi 
+// api.interceptors.response.use((res) => res, async (err) =>{
+//     const original = err.config;
+//     if(err.response?.status === 401 && !original._retry){
+//         original._retry = true;
+//         try{
+//             const {data} = await api.post("/auth/refresh");
+//             setAccessToken(data.AccessToken);
+//             original.headers.Authorization = `Bearer ${data.AccessToken}`;
+//             return api(original);
+//         }
+//         catch {
+//             setAccessToken(null);
+//             window.location.href = "/login";
+//         }
+//     }
+//     return Promise.reject(err);
+//     }
+// );
+
+// client/src/api/axios.js (ganti bagian response interceptor)
+
+// Request ke endpoint ini tidak boleh memicu percobaan refresh —
+// 401 di sini artinya kredensial salah / refresh token memang tidak valid,
+// bukan "access token expired yang bisa ditukar".
+const SKIP_REFRESH = ["/auth/login", "/auth/refresh", "/auth/register"];
+
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
     const original = err.config;
-    if(err.response?.status === 401 && !original._retry){
-        original._retry = true;
-        try{
-            const {data} = await api.post("/auth/refresh");
-            setAccessToken(data.AccessToken);
-            original.headers.Authorization = `Bearer ${data.AccessToken}`;
-            return api(original);
-        }
-        catch {
-            setAccessToken(null);
-            window.location.href = "/login";
-        }
+    const isAuthEndpoint = SKIP_REFRESH.some((path) => original?.url?.includes(path));
+
+    if (err.response?.status === 401 && !original._retry && !isAuthEndpoint) {
+      original._retry = true;
+      try {
+        const { data } = await api.post("/auth/refresh");
+        setAccessToken(data.accessToken);
+        original.headers.Authorization = `Bearer ${data.accessToken}`;
+        return api(original);
+      } catch {
+        setAccessToken(null);
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(err);
-    }
+  }
 );
-
-

@@ -72,7 +72,10 @@ export const getOrganizations = async (req, res) => {
   };
   
 export const getOrganizationById = async (req, res) => {
-  const organization = await Organization.findById(req.params.id).populate("owner", "name email");
+  // const organization = await Organization.findById(req.params.id).populate("owner", "name email");
+  const organization = await Organization.findById(req.params.id)
+  .populate("owner", "name email organization")
+  .populate("accountManager", "name email");
   if (!organization) return res.status(404).json({ message: "Organization tidak ditemukan" });
   
     // Staff agency boleh lihat semua; client hanya boleh lihat organization miliknya.
