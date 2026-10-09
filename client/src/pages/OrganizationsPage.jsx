@@ -4,12 +4,12 @@ import { api } from "../api/axios";
 import { Table } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-
-const STATUS = {
-  invited: { label: "Diundang", tone: "neutral" },
-  in_progress: { label: "Berjalan", tone: "warning" },
-  completed: { label: "Selesai", tone: "success" },
-};
+import { ORG_STATUS as STATUS } from "../constants/status";
+// const STATUS = {
+//   invited: { label: "Diundang", tone: "neutral" },
+//   in_progress: { label: "Berjalan", tone: "warning" },
+//   completed: { label: "Selesai", tone: "success" },
+// };
 
 const columns = [
 //   { key: "name", header: "Perusahaan", render: (r) => <span className="font-medium">{r.name}</span> },

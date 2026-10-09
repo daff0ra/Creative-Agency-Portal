@@ -8,7 +8,9 @@ const variants = {
   // supaya Button bisa dipakai persis seperti <button> biasa, tinggal tambah variant.
 export const Button = ({ variant = "primary", className = "", ...props }) => (
     <button
-      className={`px-4 py-2 text-sm font-medium rounded transition-colors disabled:opacity-50 ${variants[variant]} ${className}`}
-      {...props}
+      className={`inverse: "bg-white text-slate-900 hover:bg-slate-100 border border-white",
+      px-4 py-2 text-sm font-medium rounded transition-colors disabled:opacity-50 
+      ${variants[variant]} ${className}`}
+      {...props} 
     />
 );

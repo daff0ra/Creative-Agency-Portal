@@ -8,20 +8,7 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Table } from "../components/ui/Table";
-
-const ORG_STATUS = {
-  invited: { label: "Diundang", tone: "neutral" },
-  in_progress: { label: "Berjalan", tone: "warning" },
-  completed: { label: "Selesai", tone: "success" },
-};
-
-const PROJECT_STATUS = {
-  planning: { label: "Perencanaan", tone: "neutral" },
-  in_progress: { label: "Berjalan", tone: "warning" },
-  in_review: { label: "Review", tone: "warning" },
-  completed: { label: "Selesai", tone: "success" },
-  on_hold: { label: "Ditunda", tone: "neutral" },
-};
+import { ORG_STATUS, PROJECT_STATUS } from "../constants/status"
 
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString("id-ID") : "-");
 
@@ -45,8 +32,9 @@ const Info = ({ label, value }) => (
   </div>
 );
 
-export const OrganizationDetailPage = () => {
-  const { id } = useParams(); // nilai :id dari URL /organizations/:id
+export const OrganizationDetailPage = ({orgId }) => {
+  const params = useParams();
+  const id  = orgId || params.id; // nilai :id dari URL /organizations/:id
   const { user } = useAuth();
   const canManage = MANAGERS.includes(user.role); // tombol tambah hanya untuk agency manager
 
