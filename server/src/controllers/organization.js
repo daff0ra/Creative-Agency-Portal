@@ -1,6 +1,10 @@
 import Organization from "../models/Organization.model.js";
 import User from "../models/user.model.js";
 
+import OnboardingTask from "../models/OnboardingTask.model.js";
+import { DEFAULT_ONBOARDING_TASKS } from "../constants/onboardingTemplate.js";
+
+
 // export const createOrganization = async (req,res) => {
 //     try {
 //         const { name, industry, website, owner } = req.body; // owner: { name, email, password }
@@ -35,33 +39,36 @@ import User from "../models/user.model.js";
 //   }
 // }
 
-export const createOrganization = async (req, res) => {
-    try {
-      const { name, industry, website, owner } = req.body;
-  
-      if (await User.findOne({ email: owner.email })) {
-        return res.status(400).json({ message: "Email owner sudah terdaftar" });
-      }
-  
-      const organization = await Organization.create({
-        name, industry, website,
-        accountManager: req.user.role === "ACCOUNT_MANAGER" ? req.user.id : null,
-      });
-  
-      try {
-        await User.create({
-          ...owner, userType: "client", role: "CLIENT_OWNER", organization: organization._id,
-        });
-      } catch (err) {
-        await Organization.findByIdAndDelete(organization._id); // batalkan organization kalau owner gagal dibuat
-        throw err;
-      }
-  
-      res.status(201).json(organization);
-    } catch (err) {
-      res.status(500).json({ message: "Terjadi kesalahan", error: err.message });
-    }
-  };
+export const createOrganization = asyncHandler(async (req, res) => {
+  const { name, industry, website, owner } = req.body;
+
+  if (await User.findOne({ email: owner.email })) {
+    return res.status(400).json({ message: "Email owner sudah terdaftar" });
+  }
+
+  const organization = await Organization.create({
+    name, industry, website,
+    accountManager: req.user.role === "ACCOUNT_MANAGER" ? req.user.id : null,
+  });
+
+  try {
+    // userType dan role ditaruh SETELAH ...owner supaya tidak bisa ditimpa dari body
+    await User.create({ ...owner, userType: "client", role: "CLIENT_OWNER", organization: organization._id });
+
+    // map: ubah tiap template jadi dokumen task lengkap; insertMany: simpan semuanya dalam satu perintah
+    await OnboardingTask.insertMany(
+      DEFAULT_ONBOARDING_TASKS.map((task, i) => ({ ...task, organization: organization._id, order: i + 1 }))
+    );
+  } catch (err) {
+    // Database lokal tanpa transaksi, jadi bersihkan manual agar tidak ada data setengah jadi
+    await User.deleteMany({ organization: organization._id });
+    await OnboardingTask.deleteMany({ organization: organization._id });
+    await Organization.findByIdAndDelete(organization._id);
+    throw err;
+  }
+
+  res.status(201).json(organization);
+});
 
 export const getOrganizations = async (req, res) => {
     // populate(field, "kolom yang diambil"): ganti ObjectId dengan data user, hanya name & email
