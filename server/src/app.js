@@ -10,6 +10,7 @@ import organizationRoutes from "./routes/organization.js"
 import projectRoutes from "./routes/project.routes.js"
 import onboardingTaskRoutes from "./routes/onboardingTask.js";
 import dashboardRoutes from "./routes/dashboard.js"
+import userRoutes from "./routes/user.js";
 
 const app = express();
 
@@ -25,6 +26,6 @@ app.use("/organizations", organizationRoutes);
 app.use("/projects", projectRoutes)
 app.use("/onboardingTask", onboardingTaskRoutes);
 app.use("/dashboard", dashboardRoutes);
-
+app.use("/users",userRoutes);
 // another /
 export default app;

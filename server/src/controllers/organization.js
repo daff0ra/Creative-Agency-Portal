@@ -87,3 +87,24 @@ export const getOrganizationById = async (req, res) => {
   
   res.json(organization);
 };
+
+export const assignAccountManager = asyncHandler(async (req, res) => {
+  const { accountManagerId } = req.body; // null berarti mencopot account manager
+
+  if (accountManagerId) {
+    // Jangan percaya ID dari body: pastikan benar-benar staff agency ber-role ACCOUNT_MANAGER
+    const manager = await User.findById(accountManagerId);
+    if (!manager || manager.userType !== "agency" || manager.role !== "ACCOUNT_MANAGER") {
+      return res.status(400).json({ message: "User bukan account manager yang valid" });
+    }
+  }
+
+  const organization = await Organization.findByIdAndUpdate(
+    req.params.id,
+    { accountManager: accountManagerId || null },
+    { new: true } // kembalikan dokumen versi terbaru, bukan sebelum update
+  ).populate("accountManager", "name email");
+
+  if (!organization) return res.status(404).json({ message: "Organization tidak ditemukan" });
+  res.json(organization);
+});
