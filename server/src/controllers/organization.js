@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import OnboardingTask from "../models/OnboardingTask.model.js";
 import { DEFAULT_ONBOARDING_TASKS } from "../constants/onboardingTemplate.js";
 
-
+import { asyncHandler } from "../utils/asyncHandler.js";
 // export const createOrganization = async (req,res) => {
 //     try {
 //         const { name, industry, website, owner } = req.body; // owner: { name, email, password }

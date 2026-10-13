@@ -1,10 +1,16 @@
 import Project from "../models/Project.model.js"
 import Organization from "../models/Organization.model.js";
 
+import { allActiveAgencyStaff } from "../utils/teamRules.js";
+
 export const createProject = async (req, res) => {
     try {
       const { title, description, organization, startDate, dueDate, team = [] } = req.body;
   
+      if (!(await allActiveAgencyStaff(team))) { // di assignTeam: userIds
+        return res.status(400).json({ message: "Semua anggota tim harus staff agency yang aktif" });
+      }
+
       const orgExists = await Organization.findById(organization);
       if (!orgExists) return res.status(404).json({ message: "Organization tidak ditemukan" });
   
@@ -47,9 +53,12 @@ export const updateProjectStatus = async (req,res) =>{
     res.json(project);
 }
 
-export const assiggnTeam = async (req,res) =>{
+export const assignTeam = async (req,res) =>{
     const {userIds} = req.body;
-
+    
+    if (!(await allActiveAgencyStaff(team))) { // di assignTeam: userIds
+      return res.status(400).json({ message: "Semua anggota tim harus staff agency yang aktif" });
+    }
     const project = await Project.findByIdAndUpdate(
         req.params.id,
         {team: userIds},

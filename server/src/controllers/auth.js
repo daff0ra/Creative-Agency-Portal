@@ -1,9 +1,11 @@
-import User from "../models/user.model.js"
-import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js"
-import jwt from "jsonwebtoken"
+import User from "../models/user.model.js";
+import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js";
+import jwt from "jsonwebtoken";
 
-import {asyncHandler} from "../utils/asyncHandler.js"
-import { AGENCY_ROLES, ROLE_RANK } from "../constants/roles.js"
+import {asyncHandler} from "../utils/asyncHandler.js";
+import { AGENCY_ROLES, ROLE_RANK } from "../constants/roles.js";
+
+import { refreshCookieOptions } from "../utils/cookieOptions.js";
 
 export const registerUser = asyncHandler( async (req, res) =>{
         const {name, email, password, role} = req.body;
@@ -44,7 +46,8 @@ export const loginUser = async (req,res) =>{
         user.refreshToken = refreshToken;
         await user.save();
 
-        res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        // res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
         res.status(200).json({
             accessToken,
@@ -81,6 +84,7 @@ export const logoutUser = async (req,res) =>{
     if(token) {
         await User.findOneAndUpdate({refreshToken: token}, {refreshToken: null});
     }
-    res.clearCookie("refreshToken");
+    // res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", refreshCookieOptions);
     res.json({message: "logout berhasil"});
 }
