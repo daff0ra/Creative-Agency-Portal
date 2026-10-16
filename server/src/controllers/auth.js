@@ -1,25 +1,32 @@
-import User from "../models/user.model.js"
-import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js"
+import User from "../models/user.model.js";
+import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js";
+import jwt from "jsonwebtoken";
 
-import jwt from "jsonwebtoken"
-// tambahin ini nanti
-// import {asyncHandler} from "../utils/asyncHandler.js"
+import {asyncHandler} from "../utils/asyncHandler.js";
+import { AGENCY_ROLES, ROLE_RANK } from "../constants/roles.js";
 
-export const registerUser = async (req, res) =>{
-    try{
-        const {name, email, password, userType, role} = req.body;
+import { refreshCookieOptions } from "../utils/cookieOptions.js";
 
-        const existingUser = await User.findOne({email});
-        if(existingUser) return res.status(400).json({message: "Email sudah terdaftar"});
+export const registerUser = asyncHandler( async (req, res) =>{
+        const {name, email, password, role} = req.body;
 
-        const user = await User.create({ name, email, password, userType, role});
+        if(!AGENCY_ROLES.includes(role)){
+            return res.status(400).json({message: "Role tidak valid untuk akun staff"})
+        }
+
+        const myRank = ROLE_RANK[req.user.role];
+        if (!myRank || ROLE_RANK[role] <= myRank) {
+            return res.status(403).json({ message: "Tidak boleh membuat akun dengan role setara atau di atas role Anda" });
+          }
         
-        res.status(201).json({message: "registrasi berhasil", userId: user._id});
+          if (await User.findOne({ email })) {
+            return res.status(400).json({ message: "Email sudah terdaftar" });
+          }
+        
+          const user = await User.create({ name, email, password, userType: "agency", role });
+          res.status(201).json({ message: "Registrasi berhasil", userId: user._id });
     }
-    catch(err){
-        res.status(500).json({message:"terjadi kesalahan", error: err.message})
-    }
-}
+)
 
 export const loginUser = async (req,res) =>{
     try{
@@ -39,7 +46,8 @@ export const loginUser = async (req,res) =>{
         user.refreshToken = refreshToken;
         await user.save();
 
-        res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        // res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
         res.status(200).json({
             accessToken,
@@ -76,6 +84,7 @@ export const logoutUser = async (req,res) =>{
     if(token) {
         await User.findOneAndUpdate({refreshToken: token}, {refreshToken: null});
     }
-    res.clearCookie("refreshToken");
+    // res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", refreshCookieOptions);
     res.json({message: "logout berhasil"});
 }
