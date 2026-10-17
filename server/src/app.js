@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -14,12 +15,21 @@ import userRoutes from "./routes/user.js";
 
 const app = express();
 
+// Hop proxy di depan aplikasi (0 saat lokal). Angka yang salah bisa membuat IP palsu lolos rate limit,
+app.set("trust proxy", Number(process.env.TRUST_PROXY || 0));
+
+app.get("/health", (req, res) => {
+    const dbUp = mongoose.connection.readyState === 1; // 1 = terhubung
+    res.status(dbUp ? 200 : 503).json({ status: dbUp ? "ok" : "db_down" });
+  });
+
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(errorHandler);
+
 
 app.use("/auth", authRoutes);
 app.use("/organizations", organizationRoutes);

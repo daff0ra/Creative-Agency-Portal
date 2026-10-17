@@ -1,9 +1,7 @@
-
 // Function factory seperti authorize(): validate(schema) mengembalikan middleware.
 // source menentukan bagian request yang diperiksa: "body" (default) atau "params".
-
-export const validate = (schema) => (req, res, next) => {
-    const result = schema.safeParse(req.body);
+export const validate = (schema, source = "body") => (req, res, next) => {
+    const result = schema.safeParse(req[source]);
   
     if (!result.success) {
       return res.status(400).json({
@@ -15,6 +13,6 @@ export const validate = (schema) => (req, res, next) => {
       });
     }
   
-    req.body = result.data;
+    if (source === "body") req.body = result.data; // hanya body yang ditimpa, params tidak perlu
     next();
   };
