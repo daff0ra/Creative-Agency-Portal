@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Card } from "../components/ui/Card";
 import { OrganizationDetailPage } from "./OrganizationDetailPage";
 import { ORG_STATUS, PROJECT_STATUS } from "../constants/status";
+import { ClientDashboard } from "./ClientDashboard";
 
 const Stat = ({ label, value }) => (
   <Card className="p-4">
@@ -119,9 +120,6 @@ export const DashboardPage = () => {
     return <p className="text-sm text-slate-500">Memuat...</p>;
   }
 
-  if (user.userType === "client") {
-    return <OrganizationDetailPage orgId={user.organization} />;
-  }
-
+  if (user.userType === "client") return <ClientDashboard />;
   return <AgencyDashboard />;
 };
