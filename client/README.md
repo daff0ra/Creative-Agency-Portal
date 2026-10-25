@@ -1,16 +1,13 @@
-# React + Vite
+# Creative Agency Portal client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Local development
 
-Currently, two official plugins are available:
+From this directory, run `npm install` once and then `npm run dev`. The client uses the Render API by default. To use a local backend instead, set `VITE_API_URL=http://localhost:5000` in a root-level `.env.local` file, then restart Vite.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Production build
 
-## React Compiler
+The production default API is `https://creative-agency-portal.onrender.com`. To use another API, set `VITE_API_URL` in the frontend host's build environment before running `npm run build`. Vite embeds this value into the generated static files, so changing it requires a new build/deploy.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The API must allow the frontend's exact origin through its `CLIENT_ORIGINS` environment variable and keep credentials enabled for CORS. Set it to a comma-separated list, for example `https://app.karsa.space,http://localhost:5173`, to allow both the deployed app and local development. Refresh-token cookies require HTTPS in production. Configure the frontend host to serve `index.html` for unknown paths so React Router routes work after a refresh.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Run `npm run build` to produce the deployable static site in `dist/`.
