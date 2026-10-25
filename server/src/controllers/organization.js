@@ -2,6 +2,7 @@ import Organization from "../models/Organization.model.js";
 import User from "../models/user.model.js";
 
 import OnboardingTask from "../models/OnboardingTask.model.js";
+// jangan lupa diganti
 import { DEFAULT_ONBOARDING_TASKS } from "../constants/onboardingTemplate.js";
 
 import { asyncHandler } from "../utils/asyncHandler.js";

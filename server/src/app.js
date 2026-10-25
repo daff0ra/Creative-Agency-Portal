@@ -15,6 +15,12 @@ import userRoutes from "./routes/user.js";
 
 const app = express();
 
+// Allow a comma-separated list so production and local development clients can
+// use the API without opening credentialed CORS to every origin.
+const allowedClientOrigins = (
+    process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN || "http://localhost:5173"
+).split(",").map((origin) => origin.trim()).filter(Boolean);
+
 // Hop proxy di depan aplikasi (0 saat lokal). Angka yang salah bisa membuat IP palsu lolos rate limit,
 app.set("trust proxy", Number(process.env.TRUST_PROXY || 0));
 
@@ -23,7 +29,7 @@ app.get("/health", (req, res) => {
     res.status(dbUp ? 200 : 503).json({ status: dbUp ? "ok" : "db_down" });
   });
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: allowedClientOrigins, credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
