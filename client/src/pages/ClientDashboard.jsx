@@ -8,7 +8,7 @@ import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Avatar } from "../components/ui/Avatar";
-import { Icon } from "../components/ui/Icon";
+import { Icon } from "../components/ui/icon";
 import { ProgressRing } from "../components/ui/ProgressRing";
 
 const formatDate = (d) =>
