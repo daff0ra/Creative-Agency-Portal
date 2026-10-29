@@ -12,6 +12,7 @@ import projectRoutes from "./routes/project.routes.js"
 import onboardingTaskRoutes from "./routes/onboardingTask.js";
 import dashboardRoutes from "./routes/dashboard.js"
 import userRoutes from "./routes/user.js";
+import projectTaskRoutes from "./routes/projectTask.routes.js";
 
 const app = express();
 
@@ -29,19 +30,31 @@ app.get("/health", (req, res) => {
     res.status(dbUp ? 200 : 503).json({ status: dbUp ? "ok" : "db_down" });
   });
 
-app.use(cors({ origin: allowedClientOrigins, credentials: true }));
+app.use(cors({
+    origin: (origin, callback) => {
+        // Requests without an Origin header (for example health checks) are not browser CORS requests.
+        if (!origin) return callback(null, false);
+        return callback(null, allowedClientOrigins.includes(origin));
+    },
+    credentials: true,
+}));
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
-app.use(errorHandler);
 
 
 app.use("/auth", authRoutes);
 app.use("/organizations", organizationRoutes);
 app.use("/projects", projectRoutes)
+app.use("/project-tasks", projectTaskRoutes);
 app.use("/onboardingTask", onboardingTaskRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/users",userRoutes);
-// another /
+
+app.use((req, res) => {
+    res.status(404).json({ message: `Endpoint tidak ditemukan: ${req.method} ${req.originalUrl}` });
+});
+app.use(errorHandler);
+
 export default app;

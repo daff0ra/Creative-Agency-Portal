@@ -16,6 +16,7 @@ const optionalDate = z
 // Parameter URL
 export const idParam = z.object({ id: objectId });
 export const organizationIdParam = z.object({ organizationId: objectId });
+export const projectIdParam = z.object({ projectId: objectId });
 
 // Body request
 // Login hanya mewajibkan password terisi, karena akun lama bisa saja berpassword pendek
@@ -62,6 +63,24 @@ export const updateProjectStatusSchema = z.object({
 });
 
 export const assignTeamSchema = z.object({ userIds: z.array(objectId) });
+
+const taskStatuses = ["backlog", "in_progress", "in_review", "done", "blocked"];
+const taskPriorities = ["low", "medium", "high", "urgent"];
+
+export const createProjectTaskSchema = z.object({
+  title: z.string().trim().min(2, "Judul task minimal 2 karakter"),
+  description: optionalText,
+  status: z.enum(taskStatuses).optional(),
+  priority: z.enum(taskPriorities).optional(),
+  assignees: z.array(objectId).optional(),
+  dueDate: optionalDate,
+  acceptanceCriteria: z.array(z.string().trim().min(1)).optional(),
+  clientVisible: z.boolean().optional(),
+});
+
+export const updateProjectTaskStatusSchema = z.object({
+  status: z.enum(taskStatuses, { message: "Status task tidak valid" }),
+});
 
 export const createTaskSchema = z.object({
   organization: objectId,

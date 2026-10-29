@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL ||
-  "https://creative-agency-portal.onrender.com";
+const apiBaseUrl = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV
+    ? "http://localhost:5000"
+    : "https://creative-agency-portal.onrender.com"
+);
 
 export const api = axios.create({
   baseURL: apiBaseUrl.replace(/\/$/, ""),
