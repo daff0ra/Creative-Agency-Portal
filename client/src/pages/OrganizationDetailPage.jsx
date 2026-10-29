@@ -12,6 +12,16 @@ import { ORG_STATUS, PROJECT_STATUS } from "../constants/status"
 
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString("id-ID") : "-");
 
+const TASK_STATUS = {
+  backlog: "Backlog",
+  in_progress: "Dikerjakan",
+  in_review: "Review",
+  done: "Selesai",
+  blocked: "Terhambat",
+};
+
+const TASK_PRIORITY = { low: "Rendah", medium: "Normal", high: "Tinggi", urgent: "Mendesak" };
+
 const projectColumns = [
   { key: "title", header: "Project", render: (r) => <span className="font-medium">{r.title}</span> },
   {
@@ -32,6 +42,93 @@ const Info = ({ label, value }) => (
   </div>
 );
 
+const ProjectTaskList = ({ project, tasks, canManage, userId, onCreate, onStatusChange }) => {
+  const [form, setForm] = useState({ title: "", description: "", priority: "medium", dueDate: "", assignee: "", acceptanceCriteria: "", clientVisible: false });
+  const [showForm, setShowForm] = useState(false);
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const acceptanceCriteria = form.acceptanceCriteria.split("\n").map((line) => line.trim()).filter(Boolean);
+    try {
+      await onCreate(project._id, {
+        title: form.title,
+        description: form.description,
+        priority: form.priority,
+        dueDate: form.dueDate,
+        assignees: form.assignee ? [form.assignee] : [],
+        acceptanceCriteria,
+        clientVisible: form.clientVisible,
+      });
+      setForm({ title: "", description: "", priority: "medium", dueDate: "", assignee: "", acceptanceCriteria: "", clientVisible: false });
+      setShowForm(false);
+    } catch {
+      // Parent shows the API error and keeps the form values for correction.
+    }
+  };
+
+  return (
+    <Card className="mt-3">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">Task project</h3>
+          <p className="text-xs text-slate-500">{tasks.length} task · {tasks.filter((task) => task.status === "done").length} selesai</p>
+        </div>
+        {canManage && <Button variant="secondary" onClick={() => setShowForm(!showForm)}>{showForm ? "Tutup" : "Tambah task"}</Button>}
+      </div>
+
+      {showForm && (
+        <form onSubmit={submit} className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-2">
+          <Input label="Judul task" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} minLength={2} required />
+          <Input label="Tenggat" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+          <Input label="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">Prioritas
+            <select className="rounded border border-slate-300 px-3 py-2 text-sm" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+              {Object.entries(TASK_PRIORITY).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">Assignee
+            <select className="rounded border border-slate-300 px-3 py-2 text-sm" value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })}>
+              <option value="">Belum ditentukan</option>
+              {project.team.map((member) => <option key={member._id} value={member._id}>{member.name}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-slate-700 md:col-span-2">Acceptance criteria <span className="font-normal text-slate-500">Satu kriteria per baris</span>
+            <textarea className="rounded border border-slate-300 px-3 py-2 text-sm" rows={3} value={form.acceptanceCriteria} onChange={(e) => setForm({ ...form, acceptanceCriteria: e.target.value })} placeholder="Contoh: Client dapat melihat status task" />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+            <input type="checkbox" checked={form.clientVisible} onChange={(e) => setForm({ ...form, clientVisible: e.target.checked })} />
+            Tampilkan task ini di portal client
+          </label>
+          <div><Button type="submit">Simpan task</Button></div>
+        </form>
+      )}
+
+      {tasks.length === 0 ? <p className="px-4 py-5 text-sm text-slate-500">Belum ada task project.</p> : (
+        <ul className="divide-y divide-slate-100">
+          {tasks.map((task) => (
+            <li key={task._id} className="flex flex-col gap-2 px-4 py-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900">{task.title}</p>
+                {task.description && <p className="mt-0.5 text-sm text-slate-500">{task.description}</p>}
+                <p className="mt-1 text-xs text-slate-500">Prioritas {TASK_PRIORITY[task.priority]} · Assignee {task.assignees.map((member) => member.name).join(", ") || "Belum ditentukan"} · Tenggat {formatDate(task.dueDate)}</p>
+                {task.acceptanceCriteria.length > 0 && <ul className="mt-2 list-inside list-disc text-xs text-slate-600">{task.acceptanceCriteria.map((criterion, index) => <li key={`${task._id}-${index}`}>{criterion}</li>)}</ul>}
+              </div>
+              {(canManage || task.assignees.some((member) => member._id === userId)) && (
+                <label className="shrink-0 text-xs text-slate-500">Status
+                  <select className="ml-2 rounded border border-slate-300 px-2 py-1 text-xs text-slate-800" value={task.status} onChange={(e) => onStatusChange(task._id, e.target.value)}>
+                    {Object.entries(TASK_STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+              )}
+              {!canManage && !task.assignees.some((member) => member._id === userId) && <Badge tone={task.status === "done" ? "success" : "warning"}>{TASK_STATUS[task.status]}</Badge>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
 export const OrganizationDetailPage = ({orgId }) => {
   const params = useParams();
   const id  = orgId || params.id; // nilai :id dari URL /organizations/:id
@@ -41,6 +138,7 @@ export const OrganizationDetailPage = ({orgId }) => {
   const [org, setOrg] = useState(null);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [projectTasks, setProjectTasks] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -54,6 +152,7 @@ export const OrganizationDetailPage = ({orgId }) => {
   // supaya bisa dipakai di useEffect sekaligus dipanggil ulang setelah tiap aksi.
   const load = useCallback(async () => {
     try {
+      setError("");
       const [orgRes, projectRes, taskRes] = await Promise.all([
         api.get(`/organizations/${id}`),
         api.get(`/projects/organization/${id}`),
@@ -61,6 +160,11 @@ export const OrganizationDetailPage = ({orgId }) => {
       ]);
       setOrg(orgRes.data);
       setProjects(projectRes.data);
+      const projectTaskResults = await Promise.all(projectRes.data.map(async (project) => {
+        const response = await api.get(`/project-tasks/project/${project._id}`);
+        return [project._id, response.data];
+      }));
+      setProjectTasks(Object.fromEntries(projectTaskResults));
       setTasks(taskRes.data);
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat data");
@@ -103,6 +207,25 @@ export const OrganizationDetailPage = ({orgId }) => {
       load();
     } catch (err) {
       setError(err.response?.data?.message || "Gagal menambah project");
+    }
+  };
+
+  const handleCreateProjectTask = async (projectId, body) => {
+    try {
+      await api.post(`/project-tasks/project/${projectId}`, body);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal membuat task project");
+      throw err;
+    }
+  };
+
+  const handleProjectTaskStatus = async (taskId, status) => {
+    try {
+      await api.patch(`/project-tasks/${taskId}/status`, { status });
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal memperbarui status task");
     }
   };
 
@@ -206,7 +329,23 @@ export const OrganizationDetailPage = ({orgId }) => {
           </Card>
         )}
 
-        <Table columns={projectColumns} rows={projects} emptyText="Belum ada project" />
+        {projects.length === 0 ? <Table columns={projectColumns} rows={projects} emptyText="Belum ada project" /> : (
+          <div className="flex flex-col gap-4">
+            {projects.map((project) => (
+              <div key={project._id}>
+                <Table columns={projectColumns} rows={[project]} />
+                <ProjectTaskList
+                  project={project}
+                  tasks={projectTasks[project._id] || []}
+                  canManage={canManage}
+                  userId={user.id}
+                  onCreate={handleCreateProjectTask}
+                  onStatusChange={handleProjectTaskStatus}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

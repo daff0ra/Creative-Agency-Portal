@@ -3,7 +3,7 @@ import { api } from "../api/axios";
 
 // fungsi berawalan "use" yang membungkus state + effect supaya bisa dipakai ulang.
 export const useOrganizationData = (id) => {
-  const [data, setData] = useState({ org: null, projects: [], tasks: [] });
+  const [data, setData] = useState({ org: null, projects: [], tasks: [], projectTasks: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -18,7 +18,16 @@ export const useOrganizationData = (id) => {
         api.get(`/projects/organization/${id}`),
         api.get(`/onboardingTask/organization/${id}`),
       ]);
-      setData({ org: orgRes.data, projects: projectRes.data, tasks: taskRes.data });
+      const projectTaskResults = await Promise.all(projectRes.data.map(async (project) => {
+        const response = await api.get(`/project-tasks/project/${project._id}`);
+        return [project._id, response.data];
+      }));
+      setData({
+        org: orgRes.data,
+        projects: projectRes.data,
+        tasks: taskRes.data,
+        projectTasks: Object.fromEntries(projectTaskResults),
+      });
       setError("");
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat data");

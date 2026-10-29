@@ -16,6 +16,14 @@ const formatDate = (d) =>
 
 const daysLeft = (d) => Math.ceil((new Date(d) - new Date()) / 86400000); // 86400000 ms = 1 hari
 
+const TASK_STATUS_LABEL = {
+  backlog: "Backlog",
+  in_progress: "Dikerjakan",
+  in_review: "Review",
+  done: "Selesai",
+  blocked: "Terhambat",
+};
+
 const Hero = ({ userName, org, percent, nextTask, hasTasks, onComplete }) => (
   <section className="bg-slate-900 text-white rounded p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
     <div className="flex-1 min-w-0">
@@ -108,7 +116,7 @@ const Stepper = ({ tasks, onComplete }) => {
   );
 };
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, tasks = [] }) => {
   const status = PROJECT_STATUS[project.status];
   const left = project.dueDate && project.status !== "completed" ? daysLeft(project.dueDate) : null;
 
@@ -119,6 +127,23 @@ const ProjectCard = ({ project }) => {
         <Badge tone={status.tone}>{status.label}</Badge>
       </div>
       <p className="text-sm text-slate-500 truncate">{project.description || "Tidak ada deskripsi"}</p>
+
+      {tasks.length > 0 && (
+        <div className="border-t border-slate-100 pt-3">
+          <p className="mb-2 text-xs font-medium text-slate-700">Pekerjaan yang dibagikan ({tasks.length})</p>
+          <ul className="flex flex-col gap-2">
+            {tasks.map((task) => (
+              <li key={task._id} className="flex items-start justify-between gap-3 text-xs">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-800">{task.title}</p>
+                  <p className="text-slate-500">{task.assignees.map((member) => member.name).join(", ") || "Tim agency"} · Tenggat {formatDate(task.dueDate)}</p>
+                </div>
+                <Badge tone={task.status === "done" ? "success" : "warning"}>{TASK_STATUS_LABEL[task.status]}</Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
         <div className="flex -space-x-2">
@@ -185,7 +210,7 @@ const CompanyCard = ({ org }) => (
 
 export const ClientDashboard = () => {
   const { user } = useAuth();
-  const { org, projects, tasks, loading, error, reload } = useOrganizationData(user.organization);
+  const { org, projects, tasks, projectTasks, loading, error, reload } = useOrganizationData(user.organization);
   const [actionError, setActionError] = useState("");
 
   const handleComplete = async (taskId) => {
@@ -245,7 +270,7 @@ export const ClientDashboard = () => {
               <Card className="p-6 text-center text-sm text-slate-500">Belum ada project</Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projects.map((p) => <ProjectCard key={p._id} project={p} />)}
+                {projects.map((p) => <ProjectCard key={p._id} project={p} tasks={projectTasks[p._id] || []} />)}
               </div>
             )}
           </section>

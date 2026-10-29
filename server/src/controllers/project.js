@@ -56,7 +56,7 @@ export const updateProjectStatus = async (req,res) =>{
 export const assignTeam = async (req,res) =>{
     const {userIds} = req.body;
     
-    if (!(await allActiveAgencyStaff(team))) { // di assignTeam: userIds
+    if (!(await allActiveAgencyStaff(userIds))) {
       return res.status(400).json({ message: "Semua anggota tim harus staff agency yang aktif" });
     }
     const project = await Project.findByIdAndUpdate(

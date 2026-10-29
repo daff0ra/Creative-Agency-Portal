@@ -1,7 +1,14 @@
-import "dotenv/config"; // memuat .env sebelum modul lain dievaluasi
-import app from "./src/app.js";
-import { connectDB } from "./src/config/db.js";
-import { checkEnv } from "./src/config/env.js";
+import dotenv from "dotenv";
+
+// Local overrides take precedence; deployments continue using normal .env/environment values.
+dotenv.config({ path: ".env.local", override: true });
+dotenv.config();
+
+const [{ default: app }, { connectDB }, { checkEnv }] = await Promise.all([
+  import("./src/app.js"),
+  import("./src/config/db.js"),
+  import("./src/config/env.js"),
+]);
 
 checkEnv();
 
