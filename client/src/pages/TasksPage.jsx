@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { MANAGERS } from "../constants/role.js";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
+import { Link } from "react-router-dom";
 
 const STATUS = {
   backlog: "Backlog",
@@ -47,6 +48,22 @@ export const TasksPage = () => {
     });
   }, [tasks, filters]);
 
+  const projectGroups = useMemo(() => {
+    const groups = new Map();
+    visibleTasks.forEach((task) => {
+      const projectId = task.project?._id;
+      const key = projectId || "unlinked";
+      if (!groups.has(key)) groups.set(key, {
+        id: projectId,
+        title: task.project?.title || "Project tidak tersedia",
+        client: task.project?.organization?.name || "Client tidak tersedia",
+        tasks: [],
+      });
+      groups.get(key).tasks.push(task);
+    });
+    return [...groups.values()];
+  }, [visibleTasks]);
+
   const updateStatus = async (taskId, status) => {
     setSavingId(taskId);
     try {
@@ -65,8 +82,8 @@ export const TasksPage = () => {
   return (
     <div className="max-w-6xl flex flex-col gap-5">
       <header>
-        <h1 className="text-lg font-semibold text-slate-900">Task</h1>
-        <p className="text-sm text-slate-500">Daftar pekerjaan lintas project</p>
+        <h1 className="text-lg font-semibold text-slate-900">Tasks</h1>
+        <p className="text-sm text-slate-500">Task dikelompokkan berdasarkan project</p>
       </header>
 
       <div className="flex flex-wrap gap-2">
@@ -82,10 +99,14 @@ export const TasksPage = () => {
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {loading ? <p className="text-sm text-slate-500">Memuat task...</p> : visibleTasks.length === 0 ? (
         <Card className="p-8 text-center text-sm text-slate-500">{tasks.length ? "Tidak ada task yang cocok dengan filter." : "Belum ada task yang ditugaskan."}</Card>
-      ) : (
-        <Card>
+      ) : projectGroups.map((group) => (
+        <Card key={group.id || "unlinked"}>
+          <div className="border-b border-slate-100 px-4 py-3">
+            {group.id ? <Link className="text-sm font-semibold text-slate-900 hover:underline" to={`/projects#${group.id}`}>{group.title}</Link> : <h2 className="text-sm font-semibold text-slate-900">{group.title}</h2>}
+            <p className="mt-0.5 text-xs text-slate-500">{group.client} · {group.tasks.length} task</p>
+          </div>
           <ul className="divide-y divide-slate-100">
-            {visibleTasks.map((task) => {
+            {group.tasks.map((task) => {
               const canUpdate = canManage || task.assignees.some((assignee) => assignee._id === user.id);
               return (
                 <li key={task._id} className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -107,7 +128,7 @@ export const TasksPage = () => {
             })}
           </ul>
         </Card>
-      )}
+      ))}
     </div>
   );
 };

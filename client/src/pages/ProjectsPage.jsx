@@ -2,17 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api/axios";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
+import { useAuth } from "../context/AuthContext";
+import { MANAGERS } from "../constants/role.js";
 
 const PROJECT_STATUS = { planning: "Perencanaan", in_progress: "Berjalan", in_review: "Review", completed: "Selesai", on_hold: "Ditunda" };
 const TASK_STATUS = { backlog: "Backlog", in_progress: "Dikerjakan", in_review: "Review", done: "Selesai", blocked: "Terhambat" };
 const dateLabel = (date) => date ? new Date(date).toLocaleDateString("id-ID") : "-";
 
 export const ProjectsPage = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [tasksByProject, setTasksByProject] = useState({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [savingTaskId, setSavingTaskId] = useState("");
 
   const loadProjects = useCallback(async () => {
     try {
@@ -27,6 +31,10 @@ export const ProjectsPage = () => {
   }, []);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
+  useEffect(() => {
+    const projectId = window.location.hash.slice(1);
+    if (projectId && projects.length) document.getElementById(projectId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [projects]);
 
   const visibleProjects = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -40,6 +48,27 @@ export const ProjectsPage = () => {
       setTasksByProject((current) => ({ ...current, [projectId]: data }));
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat task project");
+    }
+  };
+
+  const updateTaskStatus = async (projectId, task, status) => {
+    setSavingTaskId(task._id);
+    try {
+      await api.patch(`/project-tasks/${task._id}/status`, { status });
+      setTasksByProject((current) => ({
+        ...current,
+        [projectId]: current[projectId].map((item) => item._id === task._id ? { ...item, status } : item),
+      }));
+      setProjects((current) => current.map((project) => {
+        if (project._id !== projectId) return project;
+        const completedTaskCount = project.completedTaskCount + Number(status === "done") - Number(task.status === "done");
+        return { ...project, completedTaskCount };
+      }));
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal memperbarui status task");
+    } finally {
+      setSavingTaskId("");
     }
   };
 
@@ -57,7 +86,7 @@ export const ProjectsPage = () => {
       ) : visibleProjects.map((project) => {
         const progress = project.taskCount ? Math.round(project.completedTaskCount / project.taskCount * 100) : 0;
         return (
-          <Card key={project._id} className="p-4">
+          <Card key={project._id} id={project._id} className="p-4">
             <details onToggle={(event) => { if (event.currentTarget.open) loadTasks(project._id); }}>
               <summary className="cursor-pointer list-none">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -77,8 +106,15 @@ export const ProjectsPage = () => {
                 {!tasksByProject[project._id] ? <p className="text-xs text-slate-500">Memuat task...</p> : tasksByProject[project._id].length === 0 ? <p className="text-xs text-slate-500">Belum ada task di project ini.</p> : (
                   <ul className="divide-y divide-slate-100">
                     {tasksByProject[project._id].map((task) => <li key={task._id} className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-sm text-slate-800">{task.title}</span>
-                      <span className="text-xs text-slate-500">{task.assignees.map((member) => member.name).join(", ") || "Belum ditentukan"} · {TASK_STATUS[task.status] || task.status} · {dateLabel(task.dueDate)}</span>
+                      <div>
+                        <span className="text-sm text-slate-800">{task.title}</span>
+                        <p className="text-xs text-slate-500">{task.assignees.map((member) => member.name).join(", ") || "Belum ditentukan"} · Tenggat {dateLabel(task.dueDate)}</p>
+                      </div>
+                      {MANAGERS.includes(user.role) || task.assignees.some((member) => member._id === user.id) ? (
+                        <select aria-label={`Status ${task.title}`} disabled={savingTaskId === task._id} className="rounded border border-slate-300 px-2 py-1.5 text-xs" value={task.status} onChange={(event) => updateTaskStatus(project._id, task, event.target.value)}>
+                          {Object.entries(TASK_STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      ) : <Badge tone={task.status === "done" ? "success" : "neutral"}>{TASK_STATUS[task.status] || task.status}</Badge>}
                     </li>)}
                   </ul>
                 )}
