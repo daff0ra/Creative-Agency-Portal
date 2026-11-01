@@ -3,7 +3,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 
 import {
-    createProject, getProjectByOrganization, updateProjectStatus, assignTeam
+    createProject, getProjectByOrganization, listAgencyProjects, updateProjectStatus, assignTeam
 } from "../controllers/project.js"
 
 import { validate } from "../middleware/validate.js";
@@ -13,6 +13,7 @@ const router = Router();
 const agencyStaff = authorize("SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER");
 
 router.post("/", authenticate, agencyStaff, validate(createProjectSchema),createProject);
+router.get("/", authenticate, authorize("SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER", "STAFF"), listAgencyProjects);
 router.get("/organization/:organizationId", authenticate, validate(organizationIdParam, "params"), getProjectByOrganization);
 // ["invited", "in_progress", "completed"],
 router.patch("/:id/status", authenticate, validate(idParam, "params"), validate(updateProjectStatusSchema), updateProjectStatus);

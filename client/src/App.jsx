@@ -8,12 +8,16 @@ import { OrganizationFormPage } from "./pages/OrganizationFormPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { OrganizationDetailPage } from "./pages/OrganizationDetailPage.jsx";
+import { TasksPage } from "./pages/TasksPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
         <Route path="/organizations" element={<OrganizationsPage />} />
         <Route path="/organizations/new" element={<OrganizationFormPage />} />
         <Route path="/organizations/:id" element={<OrganizationDetailPage />} />

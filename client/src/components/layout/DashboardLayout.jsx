@@ -5,6 +5,8 @@ import { MANAGERS } from "../../constants/role.js";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard" },
+  { to: "/projects", label: "Projects", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER", "STAFF"] },
+  { to: "/tasks", label: "Task", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNT_MANAGER", "STAFF"] },
   { to: "/organizations", label: "Client", roles: MANAGERS },
   { to: "/staff", label: "Tambah Staff", roles: ["SUPER_ADMIN", "ADMIN"] },
 ];
