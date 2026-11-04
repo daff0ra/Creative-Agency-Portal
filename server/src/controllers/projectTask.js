@@ -32,6 +32,22 @@ export const listProjectTasks = asyncHandler(async (req, res) => {
   res.json(tasks);
 });
 
+export const listAgencyProjectTasks = asyncHandler(async (req, res) => {
+  const filter = {};
+  if (req.user.role === "STAFF") filter.assignees = req.user.id;
+
+  const tasks = await ProjectTask.find(filter)
+    .populate({
+      path: "project",
+      select: "title organization",
+      populate: { path: "organization", select: "name" },
+    })
+    .populate("assignees", "name email")
+    .sort({ dueDate: 1, updatedAt: -1 });
+
+  res.json(tasks);
+});
+
 export const createProjectTask = asyncHandler(async (req, res) => {
   const access = await getAccessibleProject(req.params.projectId, req.user);
   if (access.error) return res.status(access.error.status).json({ message: access.error.message });
