@@ -82,6 +82,23 @@ export const updateProjectTaskStatusSchema = z.object({
   status: z.enum(taskStatuses, { message: "Status task tidak valid" }),
 });
 
+const issueTypes = ["bug", "change_request", "question"];
+const issueSeverities = ["low", "medium", "high", "critical"];
+const issueStatuses = ["open", "in_progress", "resolved", "closed"];
+export const createIssueSchema = z.object({
+  project: objectId,
+  title: z.string().trim().min(3, "Judul minimal 3 karakter"),
+  type: z.enum(issueTypes),
+  severity: z.enum(issueSeverities).optional(),
+  stepsToReproduce: optionalText,
+  screenshotUrl: z.string().trim().url("URL screenshot tidak valid").or(z.literal("")).optional(),
+});
+export const updateIssueSchema = z.object({
+  status: z.enum(issueStatuses).optional(),
+  severity: z.enum(issueSeverities).optional(),
+  assignee: objectId.nullable().optional(),
+}).refine((value) => Object.keys(value).length > 0, "Minimal satu field harus diperbarui");
+
 export const createTaskSchema = z.object({
   organization: objectId,
   title: z.string().trim().min(2, "Judul minimal 2 karakter"),

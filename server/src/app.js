@@ -13,6 +13,7 @@ import onboardingTaskRoutes from "./routes/onboardingTask.js";
 import dashboardRoutes from "./routes/dashboard.js"
 import userRoutes from "./routes/user.js";
 import projectTaskRoutes from "./routes/projectTask.routes.js";
+import issueRoutes from "./routes/issue.routes.js";
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/auth", authRoutes);
 app.use("/organizations", organizationRoutes);
 app.use("/projects", projectRoutes)
 app.use("/project-tasks", projectTaskRoutes);
+app.use("/issues", issueRoutes);
 app.use("/onboardingTask", onboardingTaskRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/users",userRoutes);
