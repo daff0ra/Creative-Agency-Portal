@@ -1,21 +1,32 @@
-import User from "../models/user.model.js"
-import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js"
+import User from "../models/user.model.js";
+import {generateAccessToken, generateRefreshToken} from "../utils/generateTokens.js";
+import jwt from "jsonwebtoken";
 
-export const registerUser = async (req, res) =>{
-    try{
-        const {name, email, password, userType, role} = req.body;
+import {asyncHandler} from "../utils/asyncHandler.js";
+import { AGENCY_ROLES, ROLE_RANK } from "../constants/roles.js";
 
-        const existingUser = await User.findOne({email});
-        if(existingUser) return res.status(400).json({message: "Email sudah terdaftar"});
+import { refreshCookieOptions } from "../utils/cookieOptions.js";
 
-        const user = await User.create({ name, email, password, userType, role});
+export const registerUser = asyncHandler( async (req, res) =>{
+        const {name, email, password, role} = req.body;
+
+        if(!AGENCY_ROLES.includes(role)){
+            return res.status(400).json({message: "Role tidak valid untuk akun staff"})
+        }
+
+        const myRank = ROLE_RANK[req.user.role];
+        if (!myRank || ROLE_RANK[role] <= myRank) {
+            return res.status(403).json({ message: "Tidak boleh membuat akun dengan role setara atau di atas role Anda" });
+          }
         
-        res.status(201).json({message: "registrasi berhasil", userId: user._id});
+          if (await User.findOne({ email })) {
+            return res.status(400).json({ message: "Email sudah terdaftar" });
+          }
+        
+          const user = await User.create({ name, email, password, userType: "agency", role });
+          res.status(201).json({ message: "Registrasi berhasil", userId: user._id });
     }
-    catch(err){
-        res.status(500).json({message:"terjadi kesalahan", error: err.message})
-    }
-}
+)
 
 export const loginUser = async (req,res) =>{
     try{
@@ -35,14 +46,45 @@ export const loginUser = async (req,res) =>{
         user.refreshToken = refreshToken;
         await user.save();
 
-        res.cookie("refreshhToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        // res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000});
+        res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
         res.status(200).json({
             accessToken,
-            user: {id: user._id, name: user.name, email: user.email, role: user.role, userType: user.userType}
+            user: {id: user._id, name: user.name, email: user.email, role: user.role, userType: user.userType, organization: user.organization}
         });
     }
     catch(err){
         res.status(500).json({ message: "Terjadi kesalahan", error: err.message});
     }
+}
+
+export const refreshAccessToken = async (req,res) =>{
+    const token = req.cookies.refreshToken;
+    if(!token) return res.status(401).json({message: "Refresh token tidak ditemukan"});
+
+    let decoded;
+    try{
+        decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    }catch{
+        return res.status(401).json({message: "refresh token tidak valid atau kadaluarsa"})
+    }
+    const user = await User.findById(decoded.id).select("+refreshToken");
+    if(!user || user.refreshToken !== token){
+        return res.status(401).json({message: "refresh token tidak valid"});
+    }
+    res.json({ accessToken: generateAccessToken(user),
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, userType: user.userType, organization: user.organization }
+    });
+}
+
+export const logoutUser = async (req,res) =>{
+    const token = req.cookies.refreshToken;
+
+    if(token) {
+        await User.findOneAndUpdate({refreshToken: token}, {refreshToken: null});
+    }
+    // res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", refreshCookieOptions);
+    res.json({message: "logout berhasil"});
 }
