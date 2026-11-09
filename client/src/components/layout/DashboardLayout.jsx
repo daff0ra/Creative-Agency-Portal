@@ -34,6 +34,7 @@ export const DashboardLayout = () => {
             </details>
             <NavLink to="/calendar" className={linkClass}>Calendar</NavLink>
           </>}
+          {user.userType === "client" && <NavLink to="/work-overview/issues" className={linkClass}>Issues</NavLink>}
           {MANAGERS.includes(user.role) && <details className="group mt-2">
             <summary className="cursor-pointer list-none rounded px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-100">Administrasi <span className="float-right">⌄</span></summary>
             <div className="ml-3 mt-1 flex flex-col gap-1">

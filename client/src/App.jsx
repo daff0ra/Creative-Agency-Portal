@@ -11,6 +11,7 @@ import { OrganizationDetailPage } from "./pages/OrganizationDetailPage.jsx";
 import { TasksPage } from "./pages/TasksPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { WorkspaceModulePage } from "./pages/WorkspaceModulePage";
+import { IssuesPage } from "./pages/IssuesPage";
 function App() {
   return (
     <Routes>
@@ -23,7 +24,7 @@ function App() {
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/work-overview" element={<Navigate to="/work-overview/tasks" replace />} />
         <Route path="/work-overview/tasks" element={<TasksPage />} />
-        <Route path="/work-overview/issues" element={<WorkspaceModulePage title="Issues" />} />
+        <Route path="/work-overview/issues" element={<IssuesPage />} />
         <Route path="/work-overview/milestones" element={<WorkspaceModulePage title="Milestones" />} />
         <Route path="/work-overview/timesheets" element={<WorkspaceModulePage title="Timesheets" />} />
         <Route path="/calendar" element={<WorkspaceModulePage title="Calendar" />} />
